@@ -1,17 +1,20 @@
 # import the necessary libraries
 import numpy as np
 import pandas as pd
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as utils
+
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
 import matplotlib.pyplot as plt
 import torchvision.utils
-import config
-from utils import imshow, show_plot
-from contrastive import ContrastiveLoss
+
+import myconfig
+from myutils import imshow, show_plot
+from mycontrastive import ContrastiveLoss
 import torchvision
 from torch.autograd import Variable
 from PIL import Image
@@ -20,10 +23,10 @@ import os
 
 
 # load the dataset
-training_dir = config.training_dir
-testing_dir = config.testing_dir
-training_csv = config.training_csv
-testing_csv = config.testing_csv
+training_dir = myconfig.training_dir
+testing_dir = myconfig.testing_dir
+training_csv = myconfig.training_csv
+testing_csv = myconfig.testing_csv
 
 
 # preprocessing and loading the dataset
@@ -149,7 +152,7 @@ class SiameseNetwork(nn.Module):
 train_dataloader = DataLoader(siamese_dataset,
                         shuffle=True,
                         num_workers=8,
-                        batch_size=config.batch_size) 
+                        batch_size=myconfig.batch_size) 
 
 
 # Declare Siamese Network
@@ -191,10 +194,10 @@ def eval(eval_dataloader):
     return loss.mean()/len(eval_dataloader)
 
 
-for epoch in range(1,config.epochs):
+for epoch in range(1,myconfig.epochs):
   best_eval_loss = 9999
   train_loss = train(train_dataloader)
-  eval_loss = eval(eval_dataloader)
+  eval_loss = eval(train_dataloader)
 
   print(f"Training loss{train_loss}")
   print("-"*20)
@@ -219,10 +222,11 @@ test_dataset = SiameseDataset(
 test_dataloader = DataLoader(test_dataset, num_workers=6, batch_size=1, shuffle=True)
 
 count = 0
+device = 0
 for i, data in enumerate(test_dataloader, 0):
     x0, x1, label = data
     concat = torch.cat((x0, x1), 0)
-    output1, output2 = model(x0.to(device), x1.to(device))
+    output1, output2 = net(x0.to(device), x1.to(device))
 
     eucledian_distance = F.pairwise_distance(output1, output2)
 
